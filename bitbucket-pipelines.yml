@@ -1,0 +1,24 @@
+pipelines:
+  default:
+    - step:
+          name: Build and Package
+          trigger: automatic
+          caches:
+            - maven
+          image: maven:3-jdk-8
+          script:
+            - mvn clean package
+          artifacts:
+            - target/***
+    - step:
+        name: Publish to docker
+        services:
+          - docker
+        image: atlassian/default-image:2
+        script: 
+          - export IMAGE_NAME=$USERNAME/ipos_gateway:latest
+          - export NEW_IMAGE_NAME=$USERNAME/ipos_gateway:1.0.$BITBUCKET_BUILD_NUMBER
+          - docker login -u $USERNAME -p $PASSWORD
+          - docker build -t $IMAGE_NAME .
+          - docker tag $IMAGE_NAME $NEW_IMAGE_NAME
+          - docker push $NEW_IMAGE_NAME
